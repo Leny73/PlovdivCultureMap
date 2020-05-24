@@ -6,7 +6,8 @@ const Sidebar = (props) => {
     return (
     <div id="mySidenav" className="sidenav">
         <a className="closebtn" onClick={props.closeNav}>&times;</a>
-        <button onClick={props.clickShowMarkers}>Show Locations</button>
+        <button onClick={props.showMarkers}>Show Locations</button>
+        <button onClick={props.hideMarkers}>Hide Locations</button>
         <select id="list-view">
             <option value="ancienttheatre">Ancient Theatre of Phillipopolis</option>
             <option value="ancientstadium">Ancient Stadium of Phillipopolis</option>
