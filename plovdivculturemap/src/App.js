@@ -135,7 +135,7 @@ closeNav() {
     document.getElementById("mySidenav").style.width = "0";
 }
 
-selectPOI(event){
+selectPOI = (event) =>{
   this.setState({
     selectedOption: event.target.value
   })
