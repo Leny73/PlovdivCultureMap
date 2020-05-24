@@ -30,8 +30,10 @@ class App extends React.Component {
       events : [],
       markers : [],
       filtered : [],
-      showMarkers: true,
-      selectedOption: 'hide-poi',
+      map:null,
+      polygon: null,
+      showMarkers: false,
+      selectedOption: 'show-poi',
       query:'',
       locations: [
         {title:"The Ancient Theatre of Philippopolis", location:{lat: 42.146839,lng: 24.751006}},
@@ -49,7 +51,7 @@ componentDidMount(){
 }
 
 renderMap = () => {
-  const url = "https://maps.googleapis.com/maps/api/js?key=AIzaSyC9vNXWd1DKH8x5EQwAaY8wx_m-L0jMKDo&callback=initMap"
+  const url = "https://maps.googleapis.com/maps/api/js?libraries=drawing,geometry&key=AIzaSyC9vNXWd1DKH8x5EQwAaY8wx_m-L0jMKDo&callback=initMap"
   loadScript(url);
   window.initMap = this.initMap;
 }
@@ -106,7 +108,19 @@ initMap = () => {
     mapTypeControl:false
   });
   this.displayMarkers(map);
-
+  this.setState({
+    map
+  })
+  const drawingManager = new window.google.maps.drawing.DrawingManager({
+    drawingMode: window.google.maps.drawing.OverlayType.POLYGON,
+    drawingControl: true,
+    drawingControlOptions: {
+      position: window.google.maps.ControlPosition.TOP_CENTER,
+      drawingModes: [
+        window.google.maps.drawing.OverlayType.POLYGON
+      ]
+    }
+  });
   // Apply new JSON when the user chooses to hide/show features.
   document.getElementById('hide-poi').addEventListener('click', function() {
     map.setOptions({styles: styles['hide']});
@@ -114,16 +128,75 @@ initMap = () => {
   document.getElementById('show-poi').addEventListener('click', function() {
     map.setOptions({styles: styles['default']});
   });
+  document.getElementById('toggle-drawing').addEventListener('click', () => {
+    this.toggleDrawing(drawingManager, map)
+  })
+
+  drawingManager.addListener('overlaycomplete', (event) => {
+    let { polygon } = this.state;
+    if(polygon){
+      this.setState({
+        polygon: null
+      });
+      this.clickHideMarker(); 
+    }
+    drawingManager.setDrawingMode(null);
+    polygon = event.overlay;
+    polygon.setEditable(true);
+    this.setState({
+      polygon
+    })
+    this.searchWithinPolygon();
+    polygon.getPath().addListener('set_at', this.searchWithinPolygon);
+    polygon.getPath().addListener('insert_at', this.searchWithinPolygon);
+  })
  }
 
- populateInfoWindow = (marker,infowindow,map) => {
+ searchWithinPolygon = () => {
+   const { markers, polygon, map } = this.state;
+   markers.map((marker,index) => {
+    if(window.google.maps.geometry.poly.containsLocation(marker.position, polygon)){
+      marker.setVisible(true);
+    } else {
+      marker.setVisible(false);
+    }
+   })
+ }
+
+ populateInfoWindow = (marker,infowindow, map) => {
   if(infowindow.marker !== marker){
     infowindow.marker = marker;
-    infowindow.setContent('<div>' + marker.title + '</div>');
-    infowindow.open(map,marker);
     infowindow.addListener('closeclick', function() {
       infowindow.content = null;
-    })
+    });
+    const streetViewService = new window.google.maps.StreetViewService();
+    const radius = 50;
+
+    function getStreetView(data, status) {
+      if (status == window.google.maps.StreetViewStatus.OK) {
+        const nearStreetViewLocation = data.location.latLng;
+        const heading = window.google.maps.geometry.spherical.computeHeading(
+          nearStreetViewLocation, marker.position);
+          infowindow.setContent('<div style="width:300px;height:30px">' + marker.title + '</div><div style="width:300px;height:200px"id="pano"></div>');
+          const panoramaOptions = {
+            position: nearStreetViewLocation,
+            pov: {
+              heading: heading,
+              pitch: 30
+            },
+            motionTrackingControlOptions: {
+              position: window.google.maps.ControlPosition.LEFT_BOTTOM
+            }
+          };
+        const panorama = new window.google.maps.StreetViewPanorama(
+          document.getElementById('pano'), panoramaOptions);
+      } else {
+        infowindow.setContent('<div>' + marker.title + '</div>' +
+          '<div>No Street View Found</div>');
+      }
+    }
+    streetViewService.getPanoramaByLocation(marker.position, radius, getStreetView);
+    infowindow.open(map, marker);
   }
 }
 
@@ -163,6 +236,18 @@ clickHideMarker = () => {
     showMarkers,
     markers
   });
+}
+
+toggleDrawing = (drawingManager, map) => {  
+  const { polygon } = this.state;
+  if(drawingManager.map){
+    drawingManager.setMap(null);
+    if(polygon){
+      polygon.setMap(null)
+    }
+  } else {
+    drawingManager.setMap(map)
+  }
 }
   render(){
     return (
