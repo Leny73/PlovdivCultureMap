@@ -4,8 +4,7 @@ const Footer = () => {
     return (
         <footer>
             <p>Created by: Lyuben Branzalov</p>
-            <p>Contact information: <a href="mailto:lbranzalov95@gmail.com.com">
-            lbranzalov95@gmail.com</a>.</p>
+            <p>Plovdiv Culture Map 2020 &copy;</p>
         </footer>
     )
 }

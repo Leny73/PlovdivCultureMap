@@ -5,7 +5,6 @@ import './App.css';
 import Header from './components/header';
 import Footer from './components/footer';
 import Sidebar from './components/sidebar';
-import Map from './components/map';
 import { screen } from '@testing-library/react';
 
 const styles = {
@@ -42,7 +41,8 @@ class App extends React.Component {
         {title:"Bishop's Basilica of Philippopolis", location:{lat: 42.144118,lng: 24.752732}},
         {title:"Small Basilica of Philippopolis", location:{lat: 42.146448,lng: 24.757944}},
         {title:"Old Town Plovdiv - Architectural-History Reserve ", location:{lat: 42.149824,lng: 24.752665}},
-      ]
+      ],
+      placeMarkers: []
     }
   }
 
@@ -51,9 +51,10 @@ componentDidMount(){
 }
 
 renderMap = () => {
-  const url = "https://maps.googleapis.com/maps/api/js?libraries=drawing,geometry&key=AIzaSyC9vNXWd1DKH8x5EQwAaY8wx_m-L0jMKDo&callback=initMap"
+  const url = "https://maps.googleapis.com/maps/api/js?libraries=places,drawing,geometry&key=AIzaSyC9vNXWd1DKH8x5EQwAaY8wx_m-L0jMKDo&callback=initMap"
   loadScript(url);
   window.initMap = this.initMap;
+  window.displayDirections = this.displayDirections;
 }
 displayMarkers = (map) => {
   const that = this;
@@ -102,6 +103,7 @@ makeMarkerIcon = (markerColor) => {
   return markerImage;
 }
 initMap = () => {
+  const that = this;
   const map = new window.google.maps.Map(document.getElementById('map'), {
     center: {lat: 42.146839, lng: 24.751006},
     zoom: 14,
@@ -128,9 +130,9 @@ initMap = () => {
   document.getElementById('show-poi').addEventListener('click', function() {
     map.setOptions({styles: styles['default']});
   });
-  document.getElementById('toggle-drawing').addEventListener('click', () => {
-    this.toggleDrawing(drawingManager, map)
-  })
+  // document.getElementById('toggle-drawing').addEventListener('click', () => {
+  //   this.toggleDrawing(drawingManager, map)
+  // })
 
   drawingManager.addListener('overlaycomplete', (event) => {
     let { polygon } = this.state;
@@ -149,9 +151,249 @@ initMap = () => {
     this.searchWithinPolygon();
     polygon.getPath().addListener('set_at', this.searchWithinPolygon);
     polygon.getPath().addListener('insert_at', this.searchWithinPolygon);
-  })
+  });
+  
+  document.getElementById('zoom-to-area').addEventListener('click', () => {
+    this.zoomToArea(map)
+  });
+
+  document.getElementById('search-within-time').addEventListener('click', () => {
+    this.searchWithinTime(map);
+  });
+
+  const autoComplete = new window.google.maps.places.Autocomplete(document.getElementById('search-within-time-text'));
+  const searchBox = new window.google.maps.places.SearchBox(document.getElementById('places-search'));
+  searchBox.setBounds(map.getBounds());
+
+  searchBox.addListener('places_changed', function(){
+    debugger
+    that.searchBoxPlaces(this);
+  });
+  document.getElementById('go-places').addEventListener('click', this.textSearchPlaces);
  }
 
+ searchBoxPlaces = (searchBox) => {
+    this.clickHideMarker();
+    const places = searchBox.getPlaces();
+    this.createMarkersForPlaces(places);
+
+    if(places.length === 0 ){
+      window.alert("We didn't find any matching places for that search")
+    }
+ }
+
+ createMarkersForPlaces = (places) => {
+   const { map, placeMarkers } = this.state;
+   const that = this;
+   const bounds = new window.google.maps.LatLngBounds();
+
+   places.forEach( (place,idx) => {
+     const icon = {
+       url: place.icon,
+       size: new window.google.maps.Size(35, 35),
+       origin: new window.google.maps.Point(0, 0),
+       anchor: new window.google.maps.Point(15, 34),
+       scaledSize: new window.google.maps.Size(25, 25)
+     };
+     const placeInfoWindow = new window.google.maps.InfoWindow();
+     const marker = new window.google.maps.Marker({
+       map,
+       icon,
+       title: place.name,
+       position: place.geometry.location,
+       id: place.place_id
+     });
+     marker.addListener('click', function() {
+       if(placeInfoWindow === this) {
+        window.alert('This window is already on this marker');
+       } else { 
+         that.getPlacesDetails(this, placeInfoWindow);
+       }
+     })
+     placeMarkers.push(marker);
+     if(place.geometry.viewport){
+       bounds.union(place.geometry.viewport);
+     } else { 
+       bounds.extend(place.geometry.location);
+     }
+   });
+   map.fitBounds(bounds);
+   this.setState({
+     placeMarkers
+   });
+ }
+
+ getPlacesDetails(marker, infoWindow){
+   const { map } = this.state;
+   const service = new window.google.maps.places.PlacesService(map);
+   service.getDetails({
+     placeId: marker.id
+   }, (place, status) => {
+     if(status === window.google.maps.places.PlacesServiceStatus.OK){
+       infoWindow.marker = marker;
+       let innerHtml =  '<div>';
+        if(place.name){
+          innerHtml += '<strong>' + place.name + '</strong>'
+        }
+        if(place.formatted_address) {
+          innerHtml += '<br>' + place.formatted_address
+        }
+        if(place.formatted_phone_number) {
+          innerHtml += '<br>' + place.formatted_phone_number
+        }
+        if(place.opening_hours){
+          innerHtml +='<br><br><strong>Hours:</strong><br'+
+          place.opening_hours.weekday_text[0] + '<br>' +
+          place.opening_hours.weekday_text[1] + '<br>' +
+          place.opening_hours.weekday_text[2] + '<br>' +
+          place.opening_hours.weekday_text[3] + '<br>' +
+          place.opening_hours.weekday_text[4] + '<br>' +
+          place.opening_hours.weekday_text[5] + '<br>' +
+          place.opening_hours.weekday_text[6];
+        }
+        if(place.photos) {
+          innerHtml += '<br><br><img src="' + place.photos[0].getUrl(
+            {maxHeight: 100, maxWidth: 200}
+          ) + '">'
+        }
+        innerHtml += '</div>';
+        infoWindow.setContent(innerHtml);
+        infoWindow.open(map,marker)
+        infoWindow.addListener('click', () => {
+          infoWindow.marker = null
+        });
+     }
+   })
+ }
+ textSearchPlaces = () => {
+   const { map } = this.state;
+   const bounds = map.getBounds();
+   this.clickHideMarker();
+   const placesService = new window.google.maps.places.PlacesService(map);
+   placesService.textSearch({
+     query: document.getElementById('places-search').value,
+     bounds
+   }, (results, status) => {
+     if(status === window.google.maps.places.PlacesServiceStatus.OK){
+       this.createMarkersForPlaces(results);
+     }
+   });
+
+ }
+
+ searchWithinTime = (map) => {
+   const distantMatrixService = new window.google.maps.DistanceMatrixService;
+   const address = document.getElementById('search-within-time-text').value;
+   if(address == '') {
+     window.alert('You must enter an address');
+   } else {
+     this.clickHideMarker();
+     const { markers } = this.state;
+     const origins = [];
+
+    markers.forEach( (el, idx) => {
+      origins[idx] = el.position
+    });
+    const destination = address;
+    const mode = document.getElementById('mode').value;
+    distantMatrixService.getDistanceMatrix({
+      origins,
+      destinations: [destination],
+      travelMode: window.google.maps.TravelMode[mode],
+      unitSystem: window.google.maps.UnitSystem.IMPERIAL
+    }, ( response, status ) => {
+      if(status !== window.google.maps.DistanceMatrixStatus.OK) {
+        window.alert('Error was: '+ status)
+      } else {
+        this.displayMarkersWithinTime(response, map);
+      }
+    })
+   }
+ }
+
+ displayMarkersWithinTime(response, map) {
+   const maxDuration = document.getElementById('max-duration').value;
+   const origins = response.originAddresses;
+   const destinations = response.destinationAddresses;
+   const { markers } = this.state;
+   let atLeastOne = false;
+   origins.forEach( (el,idx) => {
+     const results = response.rows[idx].elements;
+     results.forEach( (element, index) => {
+        if(element.status === "OK") {
+          const distanceText = element.distance.text;
+          const duration = element.duration.value / 60;
+          const durationText = element.duration.text;
+
+          if(duration <= maxDuration){
+            markers[idx].setMap(map);
+            atLeastOne = true;
+            
+            const infoWindow = new window.google.maps.InfoWindow({
+              content: durationText + ' away,  ' + distanceText +
+              '<div><input type=\"button\" value=\"View Route\" onclick='+
+              '\"displayDirections(&quot;'+ origins[idx]+  '&quot;);\"></input></div>'
+            });
+
+            infoWindow.open(map, markers[idx]);
+            markers[idx].infowindow = infoWindow;
+            markers[idx].setVisible(true);
+            window.google.maps.event.addListener( markers[idx], 'click', function () {
+              this.infowindow.close();
+            });
+          }
+        }
+     })
+   })
+ }
+
+ displayDirections = (origin) => {
+  this.clickHideMarker();
+  const { map } = this.state;
+  const directionService = new window.google.maps.DirectionsService();
+  const destinationAddress = document.getElementById('search-within-time-text').value;
+  const mode = document.getElementById('mode').value;
+  directionService.route({
+    origin,
+    destination: destinationAddress,
+    travelMode: window.google.maps.TravelMode[mode]
+  }, (response, status) => {
+    if(status === window.google.maps.DirectionsStatus.OK){
+      const directionsDisplay = new window.google.maps.DirectionsRenderer({
+        map,
+        directions: response,
+        draggable: true,
+        polylineOptions:  {
+          strokeColor: 'green'
+        }
+      });
+    } else {
+      window.alert('Directions request failed due to '+ status);
+    }
+  })
+ }
+ zoomToArea = (map) => {
+   const geocoder = new window.google.maps.Geocoder();
+   const address = document.getElementById('zoom-to-area-text').value;
+   if( address === '') {
+    window.alert('You must enter an area, or a valid address.')
+   } else {
+     geocoder.geocode(
+       {
+         address: address,
+         componentRestrictions: {locality: 'Bulgaria'}
+       }, (results, status) => {
+         if( status === window.google.maps.GeocoderStatus.OK) {
+           const [ result ] = results;
+           map.setCenter(result.geometry.location);
+           map.setZoom(16);
+         } else {
+           window.alert("We couldn't find that location - try entering more specific one")
+         }
+       }
+     )
+   }
+ }
  searchWithinPolygon = () => {
    const { markers, polygon, map } = this.state;
    markers.map((marker,index) => {
@@ -279,7 +521,7 @@ toggleDrawing = (drawingManager, map) => {
   
 }
 
-// taken from https://github.com/ines2508/Map
+// followed a video in youtube about loading scripts in React
 function loadScript(url) {
   const [index] = window.document.getElementsByTagName('script');
   const script = window.document.createElement('script');
