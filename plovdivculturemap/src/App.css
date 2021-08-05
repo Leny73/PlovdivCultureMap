@@ -25,11 +25,11 @@
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
-  color: white;
+  color: rgb(187, 226, 241) ;
 }
 
 .App-link {
-  color: #61dafb;
+  color: #ffff66;
 }
 
 #toggle-drawing {
@@ -52,7 +52,7 @@
   z-index: 1; /* Stay on top */
   top: 0; /* Stay at the top */
   left: 0;
-  background-color: rgb(24, 67, 185); /* Black*/
+  background-color: rgb(187, 226, 241) ;/* Black*/
   overflow-x: hidden; /* Disable horizontal scroll */
   padding-top: 60px; /* Place content 60px from the top */
   transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
@@ -67,15 +67,23 @@
   margin-left: 50px;
   cursor: pointer;
 }
+.sidenav .showbtn {
+  width:40%;  
+  margin-right: 5px;
+  background-color: #61dafb;
+  border-radius: 10px;
+  border-color: #61dafb;
+  margin-bottom: 10px;
+}
 
 /* The navigation menu links */
 .sidenav a {
-  padding: 8px 8px 8px 32px;
+  padding: 8px 8px 8px 8px;
   text-decoration: none;
   font-size: 25px;
   color: #818181;
   display: block;
-  transition: 0.3s;
+  transition: 0.05s;
 }
 /* When you mouse over the navigation links, change their color */
 .sidenav a:hover {
@@ -93,6 +101,27 @@
   .sidenav {padding-top: 15px;}
   .sidenav a {font-size: 18px;}
 }
+header, footer {
+  background-color: #ffff;
+  height: 100%
+}
+h1{
+  margin-top:0;
+}
+
+#list-view {
+  margin-top: 15px;
+  width: 85%;
+  padding: 5px;
+}
+
+#search-input {
+  width: 85%;
+  padding: 5px;
+  margin-top: 15px;
+}
+
+
 
  /* followed by How TO - Side Navigation
      https://www.w3schools.com/howto/howto_js_sidenav.asp*/

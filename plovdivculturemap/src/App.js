@@ -1,5 +1,4 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 
 import Header from './components/header';
@@ -46,7 +45,7 @@ class App extends React.Component {
     }
   }
 
-componentDidMount(){
+async componentDidMount(){
   this.renderMap();
 }
 
@@ -55,6 +54,7 @@ renderMap = () => {
   loadScript(url);
   window.initMap = this.initMap;
 }
+
 displayMarkers = (map) => {
   const that = this;
   const markers = [];
@@ -87,7 +87,7 @@ displayMarkers = (map) => {
     })
   });
 
-  this.setState({markers});
+  this.setState({markers, largeInfoWindow});
   map.fitBounds(bounds);
 }
 
@@ -128,9 +128,9 @@ initMap = () => {
   document.getElementById('show-poi').addEventListener('click', function() {
     map.setOptions({styles: styles['default']});
   });
-  document.getElementById('toggle-drawing').addEventListener('click', () => {
-    this.toggleDrawing(drawingManager, map)
-  })
+  // document.getElementById('toggle-drawing').addEventListener('click', () => {
+  //   this.toggleDrawing(drawingManager, map)
+  // })
 
   drawingManager.addListener('overlaycomplete', (event) => {
     let { polygon } = this.state;
@@ -201,7 +201,7 @@ initMap = () => {
 }
 
 openNav() {
-    document.getElementById("mySidenav").style.width = "250px";
+    document.getElementById("mySidenav").style.width = "350px";
 }
   
 closeNav() {
@@ -252,21 +252,20 @@ toggleDrawing = (drawingManager, map) => {
   render(){
     return (
       <div className="App">
-        <Header openNav={this.openNav}/>
+        <Header
+          openNav={this.openNav}
+          selectedOption={this.state.selectedOption}
+          selectPOI={this.selectPOI}
+          />
         <Sidebar 
           showMarkers={this.clickShowMarker}
           hideMarkers={this.clickHideMarker}
           markers={this.state.markers}
           closeNav={this.closeNav}
+          populateInfoWindow={this.populateInfoWindow}
+          map={this.state.map}
+          infoWindow={this.state.largeInfoWindow}
         />
-        <div id="style-selector-control" className="map-control">
-          <input type="radio" name="show-hide" id="hide-poi" value="hide-poi" onChange={this.selectPOI}
-              className="selector-control" checked={this.state.selectedOption === "hide-poi"}/>
-          <label htmlFor="hide-poi">Hide Businesses</label>
-          <input type="radio" name="show-hide" id="show-poi" value="show-poi" onChange={this.selectPOI}
-              className="selector-control" checked={this.state.selectedOption === 'show-poi'}/>
-          <label htmlFor="show-poi">Show Businesses</label>
-        </div>
         <div id ='map'
             aria-label="map" 
             role = 'application'
