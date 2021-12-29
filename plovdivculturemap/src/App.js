@@ -153,23 +153,27 @@ initMap = () => {
     polygon.getPath().addListener('insert_at', this.searchWithinPolygon);
   });
   
-  document.getElementById('zoom-to-area').addEventListener('click', () => {
-    this.zoomToArea(map)
-  });
 
-  document.getElementById('search-within-time').addEventListener('click', () => {
-    this.searchWithinTime(map);
-  });
+  //Unused functionality could be implemented
 
-  const autoComplete = new window.google.maps.places.Autocomplete(document.getElementById('search-within-time-text'));
-  const searchBox = new window.google.maps.places.SearchBox(document.getElementById('places-search'));
-  searchBox.setBounds(map.getBounds());
+  
+  // document.getElementById('zoom-to-area').addEventListener('click', () => {
+  //   this.zoomToArea(map)
+  // });
 
-  searchBox.addListener('places_changed', function(){
-    debugger
-    that.searchBoxPlaces(this);
-  });
-  document.getElementById('go-places').addEventListener('click', this.textSearchPlaces);
+  // document.getElementById('search-within-time').addEventListener('click', () => {
+  //   this.searchWithinTime(map);
+  // });
+
+  //const autoComplete = new window.google.maps.places.Autocomplete(document.getElementById('search-within-time-text'));
+  // const searchBox = new window.google.maps.places.SearchBox(document.getElementById('places-search'));
+  // searchBox.setBounds(map.getBounds());
+
+  // searchBox.addListener('places_changed', function(){
+  //   debugger
+  //   that.searchBoxPlaces(this);
+  // });
+  //document.getElementById('go-places').addEventListener('click', this.textSearchPlaces);
  }
 
  searchBoxPlaces = (searchBox) => {

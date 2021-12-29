@@ -66,7 +66,7 @@ const Sidebar = (props) => {
         <label htmlFor="search">Select Location</label>
         <br></br>
         <select id="list-view" tabIndex="0" onChange={changeListView} value={listValue}>
-            <option value="" selected disabled hidden>Choose here</option>
+            <option value="" defaultValue="" disabled hidden>Choose here</option>
             {props.markers.map((el,idx) => <option key={idx} value={el.title}>{el.title}</option>)}
         </select>
         {selectedMarker && <div id="selectedMarker">
@@ -74,7 +74,7 @@ const Sidebar = (props) => {
             <div role="complementary" id="opening-info" style={{textAlign: 'center'}}>
                 <div role="contentinfo">{fourSquareVenue?.categories[0]?.name}</div>
                 <div role="contentinfo">{fourSquareVenue?.location.address}</div>
-                {fourSquarePhotoURL ? <img alt={`picture of ${fourSquareVenue?.location.name}`} src={fourSquarePhotoURL}/> : <div></div>}
+                {fourSquarePhotoURL ? <img alt={`${fourSquareVenue?.location.name}`} src={fourSquarePhotoURL}/> : <div></div>}
             </div>
         </div>}
     </div>
