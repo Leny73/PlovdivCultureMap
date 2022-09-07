@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { CLIENT_ID, CLIENT_SECRET } from "../environments/environment-prod";
 const Sidebar = (props) => {
   const { populateInfoWindow, map, infoWindow } = props;
@@ -6,8 +6,7 @@ const Sidebar = (props) => {
   const [selectedMarker, setSelectedMarker] = useState(null);
   const [fourSquareVenue, setFourSquareVenue] = useState(null);
   const [fourSquarePhotoURL, setFourSquarePhotoURL] = useState(null);
-  const changeListView = async (event) => {
-    const value = event.target.value;
+  const changeListView = async (value) => {
     setListValue(value);
     const [marker] = props.markers.filter((el) => el.title === value);
     setSelectedMarker(marker);
@@ -26,7 +25,8 @@ const Sidebar = (props) => {
     const [venue] = venues;
     setFourSquareVenue(venue);
     const pictureVenue = await fetch(
-      `https://api.foursquare.com/v2/venues/${venue.id}/photos?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&v=20190425&limit=1`
+      `https://api.foursquare.com/v2/venues/${venue.id}/photos?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&v=20190425&limit=1`,
+      { crossDomain: true }
     ).catch(function (error) {
       console.log(error);
       alert(`Error while requesting a picture from Foursquare API. ${error}`);
@@ -41,22 +41,29 @@ const Sidebar = (props) => {
     const url = `${photo?.prefix}300x500${photo?.suffix}`;
     setFourSquarePhotoURL(url ? url : null);
   };
-  // TO DO: Add search functionality
 
-  // const [searchTerm, setSearchTerm] = useState("");
-  // const handleChange = event => {
-  //   setSearchTerm(event.target.value);
-  // };
+  const [searchTerm, setSearchTerm] = useState("");
+  const handleChange = async (event) => {
+    event.preventDefault();
+    const value = document.getElementById("site-search").value;
+    setSearchTerm(value);
+    const [result] = props.markers?.filter((marker) => {
+      return marker.title.toLowerCase().includes(value);
+    });
+    await changeListView(result.title);
+  };
 
-  // useEffect(() => {
-  //     const results = people.filter(person =>
-  //         person.toLowerCase().includes(searchTerm)
-  //       );
-  //       const [marker] = props.markers.filter(el => el.title === value);
-  //       setSelectedMarker(marker);
-  //       populateInfoWindow(marker, infoWindow, map);
-  //       setSearchResults(results);
-  // }, [searchTerm])
+  useEffect(() => {
+    const results = props.markers?.filter((marker) =>
+      marker.title.toLowerCase().includes(searchTerm)
+    );
+    const [marker] = results;
+
+    if (marker) {
+      setSelectedMarker(marker);
+      populateInfoWindow(marker, infoWindow, map);
+    }
+  }, [searchTerm]);
 
   return (
     <div id="mySidenav" className="sidenav">
@@ -80,12 +87,21 @@ const Sidebar = (props) => {
       <hr></hr>
       <br></br>
       {/* <input id="toggle-drawing" type="button" value="Drawing Tools"/> */}
+      <label tabIndex="0" htmlFor="site-search">
+        Search the site:
+      </label>
+      <br></br>
+      <input tabIndex="0" type="search" id="site-search" />
+      <button tabIndex="0" onClick={handleChange}>
+        Search
+      </button>
+      <br></br>
       <label htmlFor="search">Select Location</label>
       <br></br>
       <select
         id="list-view"
         tabIndex="0"
-        onChange={changeListView}
+        onChange={async (event) => await changeListView(event.target.value)}
         value={listValue}
       >
         <option value="" defaultValue="" disabled hidden>

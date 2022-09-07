@@ -128,72 +128,80 @@ class App extends React.Component {
   };
   initMap = () => {
     const that = this;
-    const map = new window.google.maps.Map(document.getElementById("map"), {
-      center: { lat: 42.146839, lng: 24.751006 },
-      zoom: 14,
-      mapTypeControl: false,
-    });
-    this.displayMarkers(map);
-    this.setState({
-      map,
-    });
-    const drawingManager = new window.google.maps.drawing.DrawingManager({
-      drawingMode: window.google.maps.drawing.OverlayType.POLYGON,
-      drawingControl: true,
-      drawingControlOptions: {
-        position: window.google.maps.ControlPosition.TOP_CENTER,
-        drawingModes: [window.google.maps.drawing.OverlayType.POLYGON],
-      },
-    });
-    // Apply new JSON when the user chooses to hide/show features.
-    document.getElementById("hide-poi").addEventListener("click", function () {
-      map.setOptions({ styles: styles["hide"] });
-    });
-    document.getElementById("show-poi").addEventListener("click", function () {
-      map.setOptions({ styles: styles["default"] });
-    });
-    // document.getElementById('toggle-drawing').addEventListener('click', () => {
-    //   this.toggleDrawing(drawingManager, map)
-    // })
-
-    drawingManager.addListener("overlaycomplete", (event) => {
-      let { polygon } = this.state;
-      if (polygon) {
-        this.setState({
-          polygon: null,
-        });
-        this.clickHideMarker();
-      }
-      drawingManager.setDrawingMode(null);
-      polygon = event.overlay;
-      polygon.setEditable(true);
-      this.setState({
-        polygon,
+    if (window.google) {
+      const map = new window.google.maps.Map(document.getElementById("map"), {
+        center: { lat: 42.146839, lng: 24.751006 },
+        zoom: 14,
+        mapTypeControl: false,
       });
-      this.searchWithinPolygon();
-      polygon.getPath().addListener("set_at", this.searchWithinPolygon);
-      polygon.getPath().addListener("insert_at", this.searchWithinPolygon);
-    });
+      this.displayMarkers(map);
+      this.setState({
+        map,
+      });
+      const drawingManager = new window.google.maps.drawing.DrawingManager({
+        drawingMode: window.google.maps.drawing.OverlayType.POLYGON,
+        drawingControl: true,
+        drawingControlOptions: {
+          position: window.google.maps.ControlPosition.TOP_CENTER,
+          drawingModes: [window.google.maps.drawing.OverlayType.POLYGON],
+        },
+      });
+      // Apply new JSON when the user chooses to hide/show features.
+      document
+        .getElementById("hide-poi")
+        .addEventListener("click", function () {
+          map.setOptions({ styles: styles["hide"] });
+        });
+      document
+        .getElementById("show-poi")
+        .addEventListener("click", function () {
+          map.setOptions({ styles: styles["default"] });
+        });
+      // document.getElementById('toggle-drawing').addEventListener('click', () => {
+      //   this.toggleDrawing(drawingManager, map)
+      // })
 
-    //Unused functionality could be implemented
+      drawingManager.addListener("overlaycomplete", (event) => {
+        let { polygon } = this.state;
+        if (polygon) {
+          this.setState({
+            polygon: null,
+          });
+          this.clickHideMarker();
+        }
+        drawingManager.setDrawingMode(null);
+        polygon = event.overlay;
+        polygon.setEditable(true);
+        this.setState({
+          polygon,
+        });
+        this.searchWithinPolygon();
+        polygon.getPath().addListener("set_at", this.searchWithinPolygon);
+        polygon.getPath().addListener("insert_at", this.searchWithinPolygon);
+      });
 
-    // document.getElementById('zoom-to-area').addEventListener('click', () => {
-    //   this.zoomToArea(map)
-    // });
+      //Unused functionality could be implemented
 
-    // document.getElementById('search-within-time').addEventListener('click', () => {
-    //   this.searchWithinTime(map);
-    // });
+      // document.getElementById('zoom-to-area').addEventListener('click', () => {
+      //   this.zoomToArea(map)
+      // });
 
-    //const autoComplete = new window.google.maps.places.Autocomplete(document.getElementById('search-within-time-text'));
-    // const searchBox = new window.google.maps.places.SearchBox(document.getElementById('places-search'));
-    // searchBox.setBounds(map.getBounds());
+      // document.getElementById('search-within-time').addEventListener('click', () => {
+      //   this.searchWithinTime(map);
+      // });
 
-    // searchBox.addListener('places_changed', function(){
-    //   debugger
-    //   that.searchBoxPlaces(this);
-    // });
-    //document.getElementById('go-places').addEventListener('click', this.textSearchPlaces);
+      //const autoComplete = new window.google.maps.places.Autocomplete(document.getElementById('search-within-time-text'));
+      // const searchBox = new window.google.maps.places.SearchBox(document.getElementById('places-search'));
+      // searchBox.setBounds(map.getBounds());
+
+      // searchBox.addListener('places_changed', function(){
+      //   debugger
+      //   that.searchBoxPlaces(this);
+      // });
+      //document.getElementById('go-places').addEventListener('click', this.textSearchPlaces);
+    } else {
+      window.alert("Google API is not working");
+    }
   };
 
   searchBoxPlaces = (searchBox) => {
