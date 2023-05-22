@@ -72,7 +72,7 @@ class App extends React.Component {
 
   renderMap = () => {
     const url =
-      "https://maps.googleapis.com/maps/api/js?libraries=places,drawing,geometry&key=AIzaSyC9vNXWd1DKH8x5EQwAaY8wx_m-L0jMKDo&callback=initMap";
+      "https://maps.googleapis.com/maps/api/js?libraries=places,drawing,geometry&key=API_KEY&callback=initMap";
     loadScript(url);
     window.initMap = this.initMap;
     window.displayDirections = this.displayDirections;
