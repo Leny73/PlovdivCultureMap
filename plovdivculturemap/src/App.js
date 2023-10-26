@@ -326,6 +326,13 @@ class App extends React.Component {
     );
   };
 
+componentDidMount(){
+  this.APIKey = "";
+  this.URL = 'https://maps.googleapis.com/maps/api/js?key=API_KEY&callback=initMap';
+  this.loadScript(this.URL);
+  window.initMap = this.initMap;
+}
+
   searchWithinTime = (map) => {
     const distantMatrixService = new window.google.maps.DistanceMatrixService();
     const address = document.getElementById("search-within-time-text").value;
@@ -335,6 +342,7 @@ class App extends React.Component {
       this.clickHideMarker();
       const { markers } = this.state;
       const origins = [];
+
 
       markers.forEach((el, idx) => {
         origins[idx] = el.position;
