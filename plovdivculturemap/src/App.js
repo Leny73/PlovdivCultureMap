@@ -22,7 +22,7 @@ class App extends React.Component {
 
 componentDidMount(){
   this.APIKey = "";
-  this.URL = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyC9vNXWd1DKH8x5EQwAaY8wx_m-L0jMKDo&callback=initMap';
+  this.URL = 'https://maps.googleapis.com/maps/api/js?key=API_KEY&callback=initMap';
   this.loadScript(this.URL);
   window.initMap = this.initMap;
 }
